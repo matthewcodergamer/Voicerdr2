@@ -1,0 +1,12 @@
+{
+  "name": "VoiceRDR2 — Dialogue Asset Builder",
+  "short_name": "VoiceRDR2",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f110f",
+  "theme_color": "#151714",
+  "description": "Convert and organize Nightwalker voice dialogue into game-ready WAV packs.",
+  "icons": [
+    {"src":"assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
