@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#151714" />
+  <meta name="description" content="Convert AI voice MP3 files into Nightwalker-ready WAV dialogue packs for Red Dead Redemption 2 Story Mode mods." />
+  <title>VoiceRDR2 — Dialogue Asset Builder</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">VR</div>
+        <div>
+          <div class="eyebrow">NIGHTWALKER TOOLCHAIN</div>
+          <h1>VoiceRDR2</h1>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="privacy-pill"><span class="status-dot"></span> Local processing</span>
+        <button class="button ghost" id="loadCatalogBtn" type="button">Load Nightwalker catalog</button>
+        <button class="button ghost" id="importProjectBtn" type="button">Open project</button>
+      </div>
+    </header>
+
+    <nav class="progress-rail" aria-label="Workflow">
+      <div class="progress-step active"><span>1</span><strong>Import</strong><small>MP3 / WAV</small></div>
+      <div class="progress-line"></div>
+      <div class="progress-step"><span>2</span><strong>Match</strong><small>Script + IDs</small></div>
+      <div class="progress-line"></div>
+      <div class="progress-step"><span>3</span><strong>Organize</strong><small>Families + order</small></div>
+      <div class="progress-line"></div>
+      <div class="progress-step"><span>4</span><strong>Export</strong><small>Game-ready ZIP</small></div>
+    </nav>
+
+    <main class="workspace">
+      <section class="panel queue-panel" aria-labelledby="queueTitle">
+        <div class="panel-heading">
+          <div>
+            <p class="kicker">SOURCE QUEUE</p>
+            <h2 id="queueTitle">Voice takes</h2>
+          </div>
+          <span class="count-badge" id="fileCount">0</span>
+        </div>
+
+        <label class="dropzone" id="dropzone" for="audioInput">
+          <input id="audioInput" type="file" accept="audio/mpeg,audio/mp3,audio/wav,.mp3,.wav" multiple hidden />
+          <div class="drop-icon" aria-hidden="true">＋</div>
+          <strong>Drop your dialogue files</strong>
+          <span>MP3 or WAV. Nothing leaves this device.</span>
+          <button class="button compact" type="button" id="chooseFilesBtn">Choose files</button>
+        </label>
+
+        <div class="queue-tools">
+          <button class="text-button" id="selectAllBtn" type="button">Select all</button>
+          <button class="text-button" id="autoMatchBtn" type="button">Auto-match script</button>
+          <button class="text-button danger" id="clearQueueBtn" type="button">Clear</button>
+        </div>
+
+        <div class="file-list" id="fileList" aria-live="polite">
+          <div class="empty-state" id="emptyState">
+            <strong>No voice files yet</strong>
+            <span>Import a batch to start converting and organizing it.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel editor-panel" aria-labelledby="editorTitle">
+        <div class="panel-heading editor-heading">
+          <div>
+            <p class="kicker">DIALOGUE EDITOR</p>
+            <h2 id="editorTitle">Selected take</h2>
+          </div>
+          <span class="state-chip muted" id="matchState">Waiting for audio</span>
+        </div>
+
+        <div class="no-selection" id="noSelection">
+          <div class="no-selection-glyph">◌</div>
+          <h3>Select a voice take</h3>
+          <p>VoiceRDR2 will decode it, build a waveform, extract a transcript from the filename, and match it against Nightwalker dialogue when a catalog is loaded.</p>
+        </div>
+
+        <div class="editor-content hidden" id="editorContent">
+          <div class="audio-preview">
+            <div>
+              <span class="file-name" id="selectedFileName">—</span>
+              <span class="audio-meta" id="selectedAudioMeta">—</span>
+            </div>
+            <button class="round-button" id="previewBtn" type="button" aria-label="Preview audio">▶</button>
+          </div>
+          <canvas id="waveform" width="900" height="160" aria-label="Audio waveform"></canvas>
+
+          <div class="form-grid">
+            <label class="field field-wide">
+              <span>Subtitle / transcript</span>
+              <textarea id="transcriptField" rows="3" placeholder="What the vampire says…"></textarea>
+            </label>
+
+            <label class="field">
+              <span>Context family</span>
+              <select id="familyField">
+                <option value="saint_denis.pre_fight">Pre-fight / soul</option>
+                <option value="saint_denis.choice.question">QUESTION</option>
+                <option value="saint_denis.choice.challenge">CHALLENGE</option>
+                <option value="saint_denis.choice.leave">LEAVE</option>
+                <option value="saint_denis.react.aim">Aim</option>
+                <option value="saint_denis.react.aim_hold">Aim held</option>
+                <option value="saint_denis.react.lowered">Weapon lowered</option>
+                <option value="saint_denis.react.shot_hit">Shot hit</option>
+                <option value="saint_denis.react.shot_miss">Shot miss</option>
+                <option value="saint_denis.react.melee_draw">Melee drawn</option>
+                <option value="saint_denis.react.ranged_draw">Firearm drawn</option>
+                <option value="saint_denis.react.lasso_draw">Lasso drawn</option>
+                <option value="saint_denis.react.thrown_draw">Throwable drawn</option>
+                <option value="saint_denis.react.holster">Holster</option>
+                <option value="saint_denis.react.unarmed_start">Unarmed attack</option>
+                <option value="saint_denis.react.melee_start">Melee attack</option>
+                <option value="saint_denis.react.unarmed_hit">Unarmed hit</option>
+                <option value="saint_denis.react.melee_hit">Melee hit</option>
+                <option value="saint_denis.react.approach">Close approach</option>
+                <option value="saint_denis.react.back_away">Back away</option>
+                <option value="saint_denis.outcome.spared">Spared outcome</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Speaker</span>
+              <input id="speakerField" value="THE VAMPIRE" />
+            </label>
+
+            <label class="field field-wide">
+              <span>Audio ID</span>
+              <input id="audioIdField" spellcheck="false" />
+            </label>
+
+            <label class="field field-wide">
+              <span>Sequence ID</span>
+              <input id="sequenceIdField" spellcheck="false" />
+              <small>Lines with the same sequence stay together. Families randomize whole sequences, never individual lines.</small>
+            </label>
+
+            <label class="field">
+              <span>Line ID</span>
+              <input id="lineIdField" spellcheck="false" />
+            </label>
+
+            <label class="field">
+              <span>Text ID</span>
+              <input id="textIdField" spellcheck="false" />
+            </label>
+
+            <label class="field">
+              <span>Line order</span>
+              <input id="orderField" type="number" min="1" step="1" value="1" />
+            </label>
+
+            <label class="field">
+              <span>Tail buffer</span>
+              <div class="input-with-unit"><input id="tailField" type="number" min="0" max="1500" step="50" value="300" /><b>ms</b></div>
+            </label>
+          </div>
+
+          <div class="editor-actions">
+            <button class="button ghost" id="regenerateIdsBtn" type="button">Regenerate IDs</button>
+            <button class="button" id="groupSelectedBtn" type="button">Group selected as conversation</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel build-panel" aria-labelledby="buildTitle">
+        <div class="panel-heading">
+          <div>
+            <p class="kicker">BUILD OUTPUT</p>
+            <h2 id="buildTitle">Nightwalker pack</h2>
+          </div>
+          <span class="state-chip good" id="buildState">Ready</span>
+        </div>
+
+        <div class="field-stack">
+          <label class="field">
+            <span>Batch name</span>
+            <input id="batchNameField" value="Voice Batch 1" />
+          </label>
+          <label class="field">
+            <span>ID namespace</span>
+            <input id="namespaceField" value="nw.audio.sd" spellcheck="false" />
+          </label>
+        </div>
+
+        <div class="format-card">
+          <div class="format-heading">
+            <div><span class="format-icon">WAV</span><strong>RDR2 voice format</strong></div>
+            <span class="locked">LOCKED</span>
+          </div>
+          <dl class="format-grid">
+            <div><dt>Sample rate</dt><dd>44.1 kHz</dd></div>
+            <div><dt>Channels</dt><dd>Mono</dd></div>
+            <div><dt>Bit depth</dt><dd>16-bit PCM</dd></div>
+            <div><dt>Container</dt><dd>.wav</dd></div>
+          </dl>
+        </div>
+
+        <div class="switch-list">
+          <label class="switch-row">
+            <div><strong>Trim edge silence</strong><span>Preserve a short natural lead/tail.</span></div>
+            <input id="trimToggle" type="checkbox" checked />
+            <span class="switch"></span>
+          </label>
+          <label class="switch-row">
+            <div><strong>Normalize peaks</strong><span>Targets −1.5 dBFS without clipping.</span></div>
+            <input id="normalizeToggle" type="checkbox" checked />
+            <span class="switch"></span>
+          </label>
+          <label class="switch-row">
+            <div><strong>Patch base timing</strong><span>Update matched script durations when WAV runs longer.</span></div>
+            <input id="patchTimingToggle" type="checkbox" checked />
+            <span class="switch"></span>
+          </label>
+        </div>
+
+        <div class="build-summary">
+          <div><span>Files</span><strong id="summaryFiles">0</strong></div>
+          <div><span>Matched</span><strong id="summaryMatched">0</strong></div>
+          <div><span>Custom</span><strong id="summaryCustom">0</strong></div>
+          <div><span>Warnings</span><strong id="summaryWarnings">0</strong></div>
+        </div>
+
+        <div class="validation-box" id="validationBox">
+          <div class="validation-title"><span>✓</span><strong>Waiting for a batch</strong></div>
+          <p>Import audio and VoiceRDR2 will check IDs, dialogue grouping, durations, and export paths.</p>
+        </div>
+
+        <button class="button primary wide" id="buildZipBtn" type="button" disabled>Build Nightwalker ZIP</button>
+        <button class="button ghost wide" id="saveProjectBtn" type="button" disabled>Save project JSON</button>
+        <p class="build-note">Exports <code>audio/*.wav</code>, <code>Nightwalker.audio</code>, optional <code>Nightwalker.voice.dialogue</code>, a patched base catalog when needed, and an inventory JSON.</p>
+      </aside>
+    </main>
+  </div>
+
+  <input id="catalogInput" type="file" accept=".dialogue,.txt,text/plain" hidden />
+  <input id="projectInput" type="file" accept=".json,application/json" hidden />
+  <audio id="audioPlayer"></audio>
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
